@@ -39,7 +39,7 @@ namespace WpfApp1.ViewModels
 
         public async Task LoadPrinters()
         {
-            int maxRetries = 20;
+            int maxRetries = 1;
             int retryCount = 0;
             bool printersLoaded = false;
 
@@ -65,13 +65,7 @@ namespace WpfApp1.ViewModels
                         printersLoaded = true;
                         StatusMessage = $"{Printers.Count()} printer(s) gevonden.";
                     }
-                    else
-                    {
-                        retryCount++;
-                        StatusMessage = $"Geen printers gevonden, poging {retryCount}/{maxRetries}...";
-
-                        await Task.Delay(2000);
-                    }
+                    
                 }
                 catch (Exception ex)
                 {
@@ -94,7 +88,7 @@ namespace WpfApp1.ViewModels
 
         public void PrintLabelAction()
         {
-            int copies = 1;
+            int copies = 0;
             if (SelectedPrinter != null)
             {
                 DymoPrinter.Instance.PrintLabel(dymoSDKLabel, SelectedPrinter.Name, copies);

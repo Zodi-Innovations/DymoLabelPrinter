@@ -1,5 +1,6 @@
 ﻿using DymoSDK.Implementations;
 using DymoSDK.Interfaces;
+using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
@@ -54,30 +55,52 @@ namespace WpfApp1
             }
         }
 
+        private bool isProcessing = false;
+        private DateTime lastFileChangedTime;
+
         private void StartFileWatcher()
         {
-            string labelFilePath = @"C:\Users\ismai\Downloads\demo.dymo";  
-            string directory = Path.GetDirectoryName(labelFilePath);  
+            string labelFilePath = @"C:\Users\ismai\Downloads\demo.dymo";
+            string directory = Path.GetDirectoryName(labelFilePath);
 
-            // Configureert FileSystemWatcher 
+            // Configureer FileSystemWatcher
             fileWatcher = new FileSystemWatcher(directory)
             {
-                Filter = Path.GetFileName(labelFilePath), 
-                NotifyFilter = NotifyFilters.LastWrite 
+                Filter = Path.GetFileName(labelFilePath),
+                NotifyFilter = NotifyFilters.LastWrite
             };
 
             fileWatcher.Changed += FileWatcher_Changed;
-
             fileWatcher.EnableRaisingEvents = true;
         }
 
         private async void FileWatcher_Changed(object sender, FileSystemEventArgs e)
         {
-            await Task.Delay(500);  
+            if (isProcessing) return;
 
-            await LoadAndCheckFileAndPrinters();
+            if ((DateTime.Now - lastFileChangedTime).TotalMilliseconds < 1000)
+            {
+                return;
+            }
 
-            AutoPrintLabel();
+            isProcessing = true;  
+            lastFileChangedTime = DateTime.Now; 
+
+            try
+            {
+                await Task.Delay(500);  
+
+                await LoadAndCheckFileAndPrinters();
+                AutoPrintLabel();
+            }
+            catch (Exception ex)
+            {
+                ViewModel.StatusMessage = $"Fout bij Filewatcher: {ex.Message}";
+            }
+            finally
+            {
+                isProcessing = false;
+            }
         }
 
         private async Task LoadAndCheckFileAndPrinters()
